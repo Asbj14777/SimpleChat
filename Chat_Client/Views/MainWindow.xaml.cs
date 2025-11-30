@@ -8,7 +8,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
-
+using Chat_Client.Viewmodel;
 namespace Chat_Client
 {
     /// <summary>
@@ -16,8 +16,10 @@ namespace Chat_Client
     /// </summary>
     public partial class MainWindow : Window
     {
+        MainViewModel mainViewModel = new MainViewModel();
         public MainWindow()
         {
+            DataContext = mainViewModel;
             InitializeComponent();
         }
     }
