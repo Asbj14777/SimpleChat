@@ -29,10 +29,13 @@
         </Grid.RowDefinitions>
 
         <!-- Chat messages -->
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
         <ListBox ItemsSource="{Binding Messages}" Grid.Row="0"
                  Background="Transparent"
                  BorderThickness="0"
-                 ScrollViewer.VerticalScrollBarVisibility="Auto">
+                 IsHitTestVisible="False"
+                 ScrollViewer.CanContentScroll="True"
+                ScrollViewer.VerticalScrollBarVisibility="Auto">
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="{x:Type model:Message}">
                     <Border Padding="10" Margin="5" CornerRadius="12"
@@ -57,37 +60,35 @@
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
-
+        </ScrollViewer>
         <!-- Status -->
         <TextBlock Text="{Binding Status}" Foreground="Gray" Grid.Row="1" Margin="0,5,0,5"/>
 
         <!-- Input -->
         <StackPanel Grid.Row="2" Orientation="Horizontal">
-            <TextBox Width="600" 
+        <TextBox Width="600" 
          Text="{Binding InputMessage, UpdateSourceTrigger=PropertyChanged}" 
          AcceptsReturn="True" 
          VerticalScrollBarVisibility="Auto"
-          PreviewKeyDown="TextBox_PreviewKeyDown"/>
-
-
-
+         PreviewKeyDown="TextBox_PreviewKeyDown"/>
         </StackPanel>
+        
         <Button Content="Send" 
-Command="{Binding SendCommand}"
-Background="#28a745"   
-Foreground="White"
-FontWeight="Bold"
-Padding="5,2"
-BorderThickness="0"
-Cursor="Hand" Margin="604,0,27,0" Grid.Row="2" Height="18" VerticalAlignment="Center">
+        Command="{Binding SendCommand}"
+        Background="#28a745"   
+        Foreground="White"
+        FontWeight="Bold"
+        Padding="5,2"
+        BorderThickness="0"
+        Cursor="Hand" Margin="604,0,27,0" Grid.Row="2" Height="18" VerticalAlignment="Center">
             <Button.Style>
                 <Style TargetType="{x:Type Button}">
                     <Setter Property="Template">
                         <Setter.Value>
                             <ControlTemplate TargetType="{x:Type Button}">
                                 <Border Background="{TemplateBinding Background}" 
-                        CornerRadius="4" 
-                        BorderThickness="0">
+                                        CornerRadius="4" 
+                                        BorderThickness="0">
                                     <ContentPresenter HorizontalAlignment="Center" 
                                       VerticalAlignment="Center"/>
                                 </Border>
