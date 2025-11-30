@@ -10,10 +10,11 @@ class ChatServer
     static TcpListener listener;
     static readonly List<TcpClient> clients = new();
     static readonly object lockObj = new();
+    static readonly Dictionary<TcpClient, string> clientNames = new(); 
 
     static async Task Main()
     {
-        _ = startDiscoveryServer();
+        _ = StartDiscoveryServer();
 
         listener = new TcpListener(IPAddress.Any, 5000);
         listener.Start();
@@ -25,40 +26,59 @@ class ChatServer
             lock (lockObj) clients.Add(client);
 
             Console.WriteLine("Client connected.");
-            _ = clientHandler(client);
+            _ = HandleClient(client);
         }
     }
 
-    static async Task clientHandler(TcpClient client)
+    static async Task HandleClient(TcpClient client)
     {
-        byte[] buffer = new byte[1024];
         var stream = client.GetStream();
+        byte[] buffer = new byte[1024];
+
+        string username = "Unknown";
 
         try
         {
             while (true)
             {
                 int read = await stream.ReadAsync(buffer, 0, buffer.Length);
-                if (read == 0) break;
+                if (read == 0) break; 
 
                 string msg = Encoding.UTF8.GetString(buffer, 0, read);
-                Console.WriteLine("Received: " + msg);
 
-                broadcastMessage(msg, client);
+                if (msg.StartsWith("__username__:"))
+                {
+                    username = msg.Substring(11);
+                    lock (lockObj) clientNames[client] = username;
+
+                    BroadcastSystemMessage($"*** {username} joined the chat ***");
+                    continue;
+                }
+
+                Console.WriteLine($"{username}: {msg}");
+                BroadcastMessage($"{username}: {msg}", client);
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Client error: {ex.Message}");
+        }
         finally
         {
             lock (lockObj)
+            {
                 clients.Remove(client);
+                clientNames.Remove(client);
+            }
+
+            BroadcastSystemMessage($"*** {username} left the chat ***");
 
             client.Close();
-            Console.WriteLine("Client disconnected.");
+            Console.WriteLine($"Client {username} disconnected.");
         }
     }
 
-    static void broadcastMessage(string message, TcpClient sender)
+    static void BroadcastMessage(string message, TcpClient sender)
     {
         byte[] data = Encoding.UTF8.GetBytes(message);
 
@@ -66,9 +86,7 @@ class ChatServer
         {
             foreach (var c in clients)
             {
-                if (c == sender) 
-                    continue;
-
+                if (c == sender) continue;
                 try
                 {
                     c.GetStream().Write(data, 0, data.Length);
@@ -78,27 +96,53 @@ class ChatServer
         }
     }
 
-    static async Task startDiscoveryServer()
+    static void BroadcastSystemMessage(string message)
+    {
+        byte[] data = Encoding.UTF8.GetBytes(message);
+
+        lock (lockObj)
+        {
+            foreach (var c in clients)
+            {
+                try
+                {
+                    c.GetStream().Write(data, 0, data.Length);
+                }
+                catch { }
+            }
+        }
+
+        Console.WriteLine(message);
+    }
+
+    static async Task StartDiscoveryServer()
     {
         UdpClient udp = new UdpClient(5001);
         Console.WriteLine("Discovery service running on port 5001...");
 
         while (true)
         {
-            var result = await udp.ReceiveAsync();
-            string request = Encoding.UTF8.GetString(result.Buffer);
-
-            if (request == "DISCOVER_CHAT_SERVER")
+            try
             {
-                string response = "CHAT_SERVER|" + getLocalIPAddress() + "|5000";
-                byte[] data = Encoding.UTF8.GetBytes(response);
+                var result = await udp.ReceiveAsync();
+                string request = Encoding.UTF8.GetString(result.Buffer);
 
-                await udp.SendAsync(data, data.Length, result.RemoteEndPoint);
+                if (request == "DISCOVER_CHAT_SERVER")
+                {
+                    string response = "CHAT_SERVER|" + GetLocalIPAddress() + "|5000";
+                    byte[] data = Encoding.UTF8.GetBytes(response);
+
+                    await udp.SendAsync(data, data.Length, result.RemoteEndPoint);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Discovery error: {ex.Message}");
             }
         }
     }
 
-    static string getLocalIPAddress()
+    static string GetLocalIPAddress()
     {
         foreach (var ip in Dns.GetHostEntry(Dns.GetHostName()).AddressList)
             if (ip.AddressFamily == AddressFamily.InterNetwork)

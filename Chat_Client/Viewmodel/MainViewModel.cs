@@ -11,16 +11,11 @@ namespace Chat_Client.Viewmodel
 {
     public class MainViewModel : INotifyPropertyChanged
     {
-        private readonly ChatClientService _clientService = new();
-        public string UserName { get; set; } = "You";
-        public ObservableCollection<Message> Messages { get; } = new();
+        private readonly ChatClientService _chatService;
 
-        private string inputMessage = "";
-        public string InputMessage
-        {
-            get => inputMessage;
-            set { inputMessage = value; OnPropertyChanged(); }
-        }
+
+        public ObservableCollection<Message> Messages { get; set; } = new();
+
 
         private string status = "";
         public string Status
@@ -29,73 +24,108 @@ namespace Chat_Client.Viewmodel
             set { status = value; OnPropertyChanged(); }
         }
 
+        private string inputMessage = "";
+        public string InputMessage
+        {
+            get => inputMessage;
+            set { inputMessage = value; OnPropertyChanged(); }
+        }
+
+        private string userName = "You";
+        public string UserName
+        {
+            get => userName;
+            set { userName = value; OnPropertyChanged(); }
+        }
+
+
         public ICommand SendCommand { get; }
 
         public MainViewModel()
         {
+            _chatService = new ChatClientService();
 
-            SendCommand = new RelayCommand(async _ => await SendMessage());
+         
+            _chatService.MessageReceived += OnMessageReceived;
+            _chatService.StatusChanged += s => Status = s;
 
-            // Hook service events
-            _clientService.MessageReceived += OnMessageReceived;
-            _clientService.StatusChanged += s => Status = s;
-
-            // Auto-connect
-            _ = ConnectAsync();
+            SendCommand = new RelayCommand(async _ => await SendMessageAsync(), _ => !string.IsNullOrWhiteSpace(InputMessage));
         }
 
-        private async Task ConnectAsync()
+
+        public async Task ConnectAsync()
         {
-            await _clientService.ConnectAsync();
-        }
-
-        private async Task SendMessage()
-        {
-            if (string.IsNullOrWhiteSpace(InputMessage))
-                return;
-
-            await _clientService.SendMessage(InputMessage);
-
-            Messages.Add(new Message
-            {
-                Text = InputMessage,
-                Sender = UserName, 
-                IsIncoming = false,
-                Timestamp = DateTime.Now,
-                Type = MessageType.Chat
-            });
-
-            InputMessage = "";
+            _chatService.SetUserName(UserName);
+            bool connected = await _chatService.ConnectAsync();
+            if (!connected)
+                Status = "Failed to connect to server.";
         }
 
         private void OnMessageReceived(string msg)
         {
             App.Current.Dispatcher.Invoke(() =>
             {
+                bool isSystem = msg.StartsWith("***") && msg.EndsWith("***");
+
+                string sender = "";
+                string text = msg;
+                bool isIncoming = false;
+
+                if (isSystem)
+                {
+    
+                    text = msg.Trim('*').Trim();
+                    sender = "";
+                    isIncoming = true;
+                }
+                else
+                {
+
+                    int index = msg.IndexOf(":");
+                    if (index > 0)
+                    {
+                        sender = msg.Substring(0, index).Trim();
+                        text = msg.Substring(index + 1).Trim();
+                    }
+
+                    isIncoming = sender != UserName;
+                }
+
                 Messages.Add(new Message
                 {
-                    Text = msg,
-                    Sender = "Other",
-                    IsIncoming = true,
-                    Timestamp = DateTime.Now,
-                    Type = MessageType.Chat
+                    Text = text,
+                    Sender = sender,
+                    IsIncoming = isIncoming,
+                    Type = isSystem ? MessageType.System : MessageType.Chat,
+                    Timestamp = DateTime.Now
                 });
             });
         }
 
-        public void AddSystemMessage(string text)
+
+        private async Task SendMessageAsync()
         {
+            string text = InputMessage.Trim();
+            if (string.IsNullOrEmpty(text)) return;
+
+            await _chatService.SendMessage(text);
+
             Messages.Add(new Message
             {
                 Text = text,
-                Type = MessageType.System,
-                IsIncoming = true,
-                Timestamp = DateTime.Now
+                IsIncoming = false,
+                Timestamp = DateTime.Now,
+                Type = MessageType.Chat,
+                Sender = UserName
             });
+
+            InputMessage = "";
         }
 
+        #region INotifyPropertyChanged
         public event PropertyChangedEventHandler? PropertyChanged;
-        void OnPropertyChanged([CallerMemberName] string name = null)
-            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+        private void OnPropertyChanged([CallerMemberName] string propName = "") =>
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propName));
+        #endregion
     }
 }

@@ -27,8 +27,8 @@ namespace Chat_Client.Converters
         {
             bool incoming = (bool)value;
             return incoming
-                ? new SolidColorBrush(Color.FromRgb(60, 60, 60)) // dark gray
-                : new SolidColorBrush(Color.FromRgb(0, 120, 215)); // blue
+                ? new SolidColorBrush(Color.FromRgb(60, 60, 60)) // mørke grå
+                : new SolidColorBrush(Color.FromRgb(0, 120, 215)); // blå
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)

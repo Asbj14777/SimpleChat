@@ -10,9 +10,15 @@ namespace Chat_Client.Services
     {
         private TcpClient? client;
         private NetworkStream? stream;
+        private string userName = "You"; 
 
         public event Action<string>? MessageReceived;
         public event Action<string>? StatusChanged;
+
+        public void SetUserName(string name)
+        {
+            userName = name;
+        }
 
         public async Task<bool> ConnectAsync()
         {
@@ -31,6 +37,10 @@ namespace Chat_Client.Services
 
             StatusChanged?.Invoke("Connected.");
 
+
+            await SendMessage($"__username__:{userName}");
+
+    
             _ = Task.Run(() => ReceiveLoop());
             return true;
         }
@@ -66,7 +76,7 @@ namespace Chat_Client.Services
 
         private async Task<string?> DiscoverServer()
         {
-            UdpClient udp = new UdpClient();
+            using UdpClient udp = new UdpClient();
             udp.EnableBroadcast = true;
 
             byte[] request = Encoding.UTF8.GetBytes("DISCOVER_CHAT_SERVER");
