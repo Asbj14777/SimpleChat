@@ -8,6 +8,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using Chat_Client.Converters;
 using Chat_Client.Viewmodel;
 namespace Chat_Client
 {

@@ -3,12 +3,23 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:Chat_Client.Viewmodel"
+        xmlns:model="clr-namespace:Chat_Client.Models"
+        xmlns:conv="clr-namespace:Chat_Client.Converters"
         mc:Ignorable="d"
-        xmlns:local="clr-namespace:Chat_Client.Viewmodel"
-        Title="Chat Client" Height="450" Width="800">
+        Title="Chat Client" Height="500" Width="800">
+
     <Window.Resources>
-        <local:BoolToAlignmentConverter x:Key="BoolToAlignment"/>
+        <conv:BoolToAlignmentConverter x:Key="BoolToAlignment"/>
+        <conv:IncomingToColorConverter x:Key="IncomingToColor"/>
+        <conv:MessageBackgroundConverter x:Key="MessageBackground"/>
+        <conv:SystemMessageVisibilityConverter x:Key="SystemMessageVisibility"/>
+        <conv:ChatMessageVisibilityConverter x:Key="ChatMessageVisibility"/>
     </Window.Resources>
+
+    <Window.DataContext>
+        <vm:MainViewModel/>
+    </Window.DataContext>
 
     <Grid Margin="10">
         <Grid.RowDefinitions>
@@ -18,27 +29,42 @@
         </Grid.RowDefinitions>
 
         <!-- Chat messages -->
-        <ListBox ItemsSource="{Binding Messages}" Grid.Row="0">
+        <ListBox ItemsSource="{Binding Messages}" Grid.Row="0"
+                 Background="Transparent"
+                 BorderThickness="0"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto">
             <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <TextBlock Text="{Binding Text}" 
-                               Padding="5"
-                               TextWrapping="Wrap"
-                               HorizontalAlignment="{Binding IsIncoming, Converter={StaticResource BoolToAlignment}}"/>
+                <DataTemplate DataType="{x:Type model:Message}">
+                    <Border Padding="10" Margin="5" CornerRadius="12"
+                            MaxWidth="350"
+                            Background="{Binding Converter={StaticResource MessageBackground}}"
+                            HorizontalAlignment="{Binding IsIncoming, Converter={StaticResource BoolToAlignment}}">
+                        <StackPanel>
+                            <!-- System message -->
+                            <TextBlock Text="{Binding Text}"
+                                       FontStyle="Italic"
+                                       Foreground="Gray"
+                                       TextAlignment="Center"
+                                       Visibility="{Binding Type, Converter={StaticResource SystemMessageVisibility}}"/>
+                            <!-- Chat message -->
+                            <StackPanel Visibility="{Binding Type, Converter={StaticResource ChatMessageVisibility}}">
+                                <TextBlock Text="{Binding Sender}" FontWeight="Bold" Foreground="LightGray"/>
+                                <TextBlock Text="{Binding Text}" TextWrapping="Wrap" Foreground="White"/>
+                                <TextBlock Text="{Binding Timestamp, StringFormat=t}" FontSize="10" Foreground="LightGray" HorizontalAlignment="Right"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
 
         <!-- Status -->
-        <TextBlock Text="{Binding Status}" 
-                   Foreground="Gray" 
-                   Grid.Row="1" 
-                   Margin="0,5,0,5"/>
+        <TextBlock Text="{Binding Status}" Foreground="Gray" Grid.Row="1" Margin="0,5,0,5"/>
 
         <!-- Input -->
         <StackPanel Grid.Row="2" Orientation="Horizontal">
-            <TextBox Width="600" Text="{Binding InputMessage, UpdateSourceTrigger=PropertyChanged}"/>
-            <Button Content="Send" Width="80" Margin="10,0,0,0" Command="{Binding SendCommand}"/>
+            <TextBox Width="600" Text="{Binding InputMessage, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"/>
+            <Button Content="Send" Width="168" Margin="10,0,0,0" Command="{Binding SendCommand}"/>
         </StackPanel>
     </Grid>
 </Window>
