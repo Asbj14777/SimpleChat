@@ -8,6 +8,7 @@ namespace Chat_Client.Services
 {
     public class ChatClientService
     {
+     
         private TcpClient? client;
         private NetworkStream? stream;
         private string userName = "You"; 

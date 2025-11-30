@@ -10,6 +10,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Chat_Client.Converters;
 using Chat_Client.Viewmodel;
+using Chat_Client.Services; 
 namespace Chat_Client
 {
     /// <summary>
@@ -22,6 +23,19 @@ namespace Chat_Client
         {
             DataContext = mainViewModel;
             InitializeComponent();
+        }
+        private void TextBox_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.None)
+            {
+                e.Handled = true; // Prevent newline
+
+                if (DataContext is Viewmodel.MainViewModel vm)
+                {
+                    if (vm.SendCommand.CanExecute(null))
+                        vm.SendCommand.Execute(null);
+                }
+            }
         }
     }
 }

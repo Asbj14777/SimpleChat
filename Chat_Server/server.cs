@@ -1,4 +1,5 @@
-﻿using System;
+﻿
+using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Sockets;
@@ -10,10 +11,10 @@ class ChatServer
     static TcpListener listener;
     static readonly List<TcpClient> clients = new();
     static readonly object lockObj = new();
-    static readonly Dictionary<TcpClient, string> clientNames = new(); 
-
+    static readonly Dictionary<TcpClient, string> clientNames = new();
     static async Task Main()
     {
+        Console.Title = "Server"; 
         _ = StartDiscoveryServer();
 
         listener = new TcpListener(IPAddress.Any, 5000);
@@ -28,6 +29,7 @@ class ChatServer
             Console.WriteLine("Client connected.");
             _ = HandleClient(client);
         }
+
     }
 
     static async Task HandleClient(TcpClient client)
@@ -48,13 +50,12 @@ class ChatServer
 
                 if (msg.StartsWith("__username__:"))
                 {
-                    username = msg.Substring(11);
+                    username = msg.Substring(13);
                     lock (lockObj) clientNames[client] = username;
 
                     BroadcastSystemMessage($"*** {username} joined the chat ***");
                     continue;
                 }
-
                 Console.WriteLine($"{username}: {msg}");
                 BroadcastMessage($"{username}: {msg}", client);
             }
