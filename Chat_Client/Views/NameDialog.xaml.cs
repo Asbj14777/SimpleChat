@@ -16,7 +16,7 @@ namespace Chat_Client.Views
             if (!string.IsNullOrWhiteSpace(NameTextBox.Text))
             {
                 UserName = NameTextBox.Text.Trim();
-                DialogResult = true;
+                this.DialogResult = true; 
             }
             else
             {

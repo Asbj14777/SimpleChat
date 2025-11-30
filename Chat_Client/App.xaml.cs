@@ -7,24 +7,22 @@ namespace Chat_Client
     {
         private void Application_Startup(object sender, StartupEventArgs e)
         {
-            // Show NameDialog first
             var nameDialog = new NameDialog();
             bool? result = nameDialog.ShowDialog();
 
             if (result != true)
             {
-                Shutdown(); // Exit app if user cancels
+                MessageBox.Show("failed"); 
+                Shutdown();
                 return;
             }
 
-            // Open MainWindow and pass username
             var mainWindow = new MainWindow();
 
             if (mainWindow.DataContext is Viewmodel.MainViewModel vm)
-            {
                 vm.UserName = nameDialog.UserName;
-            }
 
+            Application.Current.MainWindow = mainWindow;
             mainWindow.Show();
         }
     }
