@@ -38,7 +38,6 @@ namespace Chat_Client.Viewmodel
             set { userName = value; OnPropertyChanged(); }
         }
 
-
         public ICommand SendCommand { get; }
 
         public MainViewModel()
@@ -73,34 +72,41 @@ namespace Chat_Client.Viewmodel
 
                 if (isSystem)
                 {
-    
+ 
                     text = msg.Trim('*').Trim();
                     sender = "";
                     isIncoming = true;
                 }
                 else
                 {
-
+         
                     int index = msg.IndexOf(":");
                     if (index > 0)
                     {
                         sender = msg.Substring(0, index).Trim();
-                        text = msg.Substring(index + 1).Trim();
+                        text = msg.Substring(index + 1).Trim(); 
+                    }
+                    else
+                    {
+                        sender = "";
+                        text = msg.Trim();
                     }
 
                     isIncoming = sender != UserName;
                 }
 
+            
                 Messages.Add(new Message
                 {
                     Text = text,
-                    Sender = sender,
+                    Sender = sender,        
                     IsIncoming = isIncoming,
                     Type = isSystem ? MessageType.System : MessageType.Chat,
                     Timestamp = DateTime.Now
                 });
             });
         }
+
 
 
         private async Task SendMessageAsync()

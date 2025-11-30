@@ -31,6 +31,7 @@
         <!-- Chat messages -->
         <ListBox ItemsSource="{Binding Messages}" Grid.Row="0"
                  Background="Transparent"
+                
                  BorderThickness="0"
                  ScrollViewer.VerticalScrollBarVisibility="Auto">
             <ListBox.ItemTemplate>
@@ -48,7 +49,7 @@
                                        Visibility="{Binding Type, Converter={StaticResource SystemMessageVisibility}}"/>
                             <!-- Chat message -->
                             <StackPanel Visibility="{Binding Type, Converter={StaticResource ChatMessageVisibility}}">
-                                <TextBlock Text="{Binding Sender}" FontWeight="Bold" Foreground="LightGray"/>
+                                <TextBlock Text="{Binding Sender}" FontWeight="Bold" Foreground="White"/>
                                 <TextBlock Text="{Binding Text}" TextWrapping="Wrap" Foreground="White"/>
                                 <TextBlock Text="{Binding Timestamp, StringFormat=t}" FontSize="10" Foreground="LightGray" HorizontalAlignment="Right"/>
                             </StackPanel>
@@ -63,7 +64,11 @@
 
         <!-- Input -->
         <StackPanel Grid.Row="2" Orientation="Horizontal">
-            <TextBox Width="600" Text="{Binding InputMessage, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"/>
+            <TextBox Width="600" 
+         Text="{Binding InputMessage, UpdateSourceTrigger=PropertyChanged}" 
+         AcceptsReturn="True" 
+         VerticalScrollBarVisibility="Auto"
+          PreviewKeyDown="TextBox_PreviewKeyDown"/>
             <Button Content="Send" Width="168" Margin="10,0,0,0" Command="{Binding SendCommand}"/>
         </StackPanel>
     </Grid>

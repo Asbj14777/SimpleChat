@@ -12,7 +12,7 @@ namespace Chat_Client.Converters
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             bool incoming = (bool)value;
-            return incoming ? HorizontalAlignment.Left : HorizontalAlignment.Right;
+            return incoming ? HorizontalAlignment.Right : HorizontalAlignment.Left;
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -26,9 +26,10 @@ namespace Chat_Client.Converters
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
         {
             bool incoming = (bool)value;
+  
             return incoming
-                ? new SolidColorBrush(Color.FromRgb(60, 60, 60)) // mørke grå
-                : new SolidColorBrush(Color.FromRgb(0, 120, 215)); // blå
+                ? new SolidColorBrush(Color.FromRgb(0, 120, 215)) 
+                : new SolidColorBrush(Color.FromRgb(60, 60, 60));
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
@@ -45,9 +46,10 @@ namespace Chat_Client.Converters
             {
                 if (msg.Type == MessageType.System)
                     return Brushes.Transparent;
+
                 return msg.IsIncoming
-                    ? new SolidColorBrush(Color.FromRgb(60, 60, 60))
-                    : new SolidColorBrush(Color.FromRgb(0, 120, 215));
+                    ? new SolidColorBrush(Color.FromRgb(0, 120, 215)) 
+                    : new SolidColorBrush(Color.FromRgb(60, 60, 60));
             }
             return Brushes.Gray;
         }
