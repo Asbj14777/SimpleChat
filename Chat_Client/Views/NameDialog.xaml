@@ -9,7 +9,7 @@
         </Grid.RowDefinitions>
         <TextBlock Text="Enter your display name:" FontWeight="Bold" Margin="0,0,0,10"/>
         <StackPanel Grid.Row="1" Orientation="Horizontal">
-            <TextBox x:Name="NameTextBox" Width="200"/>
+            <TextBox x:Name="NameTextBox" Width="200" PreviewKeyDown="NameTextBox_PreviewKeyDown"/>
             
             <Button Content="OK" Click="OkButton_Click"
             Background="#28a745"   

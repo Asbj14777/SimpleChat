@@ -19,7 +19,7 @@ class ChatServer
 
         listener = new TcpListener(IPAddress.Any, 5000);
         listener.Start();
-        Console.WriteLine("Chat server started on port 5000");
+        Console.WriteLine("Chat server started on port 5000" + Environment.NewLine + $"Localized at location {GetLocalIP()} ");
 
         while (true)
         {

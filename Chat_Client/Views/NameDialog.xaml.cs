@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using System.Windows.Input;
 
 namespace Chat_Client.Views
 {
@@ -21,6 +22,17 @@ namespace Chat_Client.Views
             else
             {
                 MessageBox.Show("Please enter a valid name.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        private void NameTextBox_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.None)
+            {
+                e.Handled = true; 
+
+                UserName = NameTextBox.Text.Trim();
+                this.DialogResult = true;
             }
         }
     }

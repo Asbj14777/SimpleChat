@@ -28,7 +28,7 @@ namespace Chat_Client
         {
             if (e.Key == Key.Enter && Keyboard.Modifiers == ModifierKeys.None)
             {
-                e.Handled = true; // Prevent newline
+                e.Handled = true;
 
                 if (DataContext is Viewmodel.MainViewModel vm)
                 {
