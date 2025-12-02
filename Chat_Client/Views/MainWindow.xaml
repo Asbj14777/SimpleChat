@@ -28,14 +28,21 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Chat messages -->
-        <ScrollViewer VerticalScrollBarVisibility="Auto">
-        <ListBox ItemsSource="{Binding Messages}" Grid.Row="0"
+        <ListBox x:Name="MessagesListBox" ItemsSource="{Binding Messages}" 
+                 Grid.Row="0"
                  Background="Transparent"
                  BorderThickness="0"
-                 IsHitTestVisible="False"
                  ScrollViewer.CanContentScroll="True"
-                ScrollViewer.VerticalScrollBarVisibility="Auto">
+                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                 HorizontalContentAlignment="Stretch">
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    <Setter Property="Padding" Value="0"/>
+                    <Setter Property="Margin" Value="0"/>
+                </Style>
+            </ListBox.ItemContainerStyle>
+
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="{x:Type model:Message}">
                     <Border Padding="10" Margin="5" CornerRadius="12"
@@ -43,13 +50,11 @@
                             Background="{Binding Converter={StaticResource MessageBackground}}"
                             HorizontalAlignment="{Binding IsIncoming, Converter={StaticResource BoolToAlignment}}">
                         <StackPanel>
-                            <!-- System message -->
                             <TextBlock Text="{Binding Text}"
                                        FontStyle="Italic"
                                        Foreground="Gray"
                                        TextAlignment="Center"
                                        Visibility="{Binding Type, Converter={StaticResource SystemMessageVisibility}}"/>
-                            <!-- Chat message -->
                             <StackPanel Visibility="{Binding Type, Converter={StaticResource ChatMessageVisibility}}">
                                 <TextBlock Text="{Binding Sender}" FontWeight="Bold" Foreground="White"/>
                                 <TextBlock Text="{Binding Text}" TextWrapping="Wrap" Foreground="White"/>
@@ -60,27 +65,23 @@
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
-        </ScrollViewer>
-        <!-- Status -->
         <TextBlock Text="{Binding Status}" Foreground="Gray" Grid.Row="1" Margin="0,5,0,5"/>
-
-        <!-- Input -->
         <StackPanel Grid.Row="2" Orientation="Horizontal">
-        <TextBox Width="600" 
-         Text="{Binding InputMessage, UpdateSourceTrigger=PropertyChanged}" 
-         AcceptsReturn="True" 
-         VerticalScrollBarVisibility="Auto"
-         PreviewKeyDown="TextBox_PreviewKeyDown"/>
+            <TextBox Width="600" 
+                     Text="{Binding InputMessage, UpdateSourceTrigger=PropertyChanged}" 
+                     AcceptsReturn="True" 
+                     VerticalScrollBarVisibility="Auto"
+                     PreviewKeyDown="TextBox_PreviewKeyDown"/>
         </StackPanel>
-        
+
         <Button Content="Send" 
-        Command="{Binding SendCommand}"
-        Background="#28a745"   
-        Foreground="White"
-        FontWeight="Bold"
-        Padding="5,2"
-        BorderThickness="0"
-        Cursor="Hand" Margin="604,0,27,0" Grid.Row="2" Height="18" VerticalAlignment="Center">
+                Command="{Binding SendCommand}"
+                Background="#28a745"   
+                Foreground="White"
+                FontWeight="Bold"
+                Padding="5,2"
+                BorderThickness="0"
+                Cursor="Hand" Margin="604,0,27,0" Grid.Row="2" Height="18" VerticalAlignment="Center">
             <Button.Style>
                 <Style TargetType="{x:Type Button}">
                     <Setter Property="Template">
@@ -90,7 +91,7 @@
                                         CornerRadius="4" 
                                         BorderThickness="0">
                                     <ContentPresenter HorizontalAlignment="Center" 
-                                      VerticalAlignment="Center"/>
+                                                      VerticalAlignment="Center"/>
                                 </Border>
                             </ControlTemplate>
                         </Setter.Value>

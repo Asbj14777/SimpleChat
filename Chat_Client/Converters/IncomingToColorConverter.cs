@@ -13,7 +13,7 @@ namespace Chat_Client.Converters
         {
             bool incoming = (bool)value;
 
-            return incoming
+            return incoming 
                 ? new SolidColorBrush(Color.FromRgb(40, 167, 69))
                 : new SolidColorBrush(Color.FromRgb(0, 120, 215));
         }

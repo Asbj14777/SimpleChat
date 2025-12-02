@@ -1,102 +1,146 @@
 ﻿using System;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 
 class ChatServer
 {
     static TcpListener listener;
-    static readonly List<TcpClient> clients = new();
-    static readonly Dictionary<TcpClient, string> names = new();
-    static readonly object lockObj = new();
+    static readonly ConcurrentBag<TcpClient> clients = new();
+    static readonly ConcurrentDictionary<TcpClient, string> names = new();
+    static readonly CancellationTokenSource shutdown = new();
 
     static async Task Main()
     {
         Console.Title = "Server";
-        _ = RunDiscovery();
+
+        _ = RunDiscovery(shutdown.Token);
 
         listener = new TcpListener(IPAddress.Any, 5000);
         listener.Start();
-        Console.WriteLine("Chat server started on port 5000" + Environment.NewLine + $"Localized at location {GetLocalIP()} ");
 
-        while (true)
+        Log($"Chat server started on port 5000 (IP: {GetLocalIP()})");
+
+        while (!shutdown.IsCancellationRequested)
         {
-            var client = await listener.AcceptTcpClientAsync();
-            lock (lockObj) clients.Add(client);
-            Console.WriteLine("Client connected.");
-            _ = HandleClient(client);
+            try
+            {
+                var client = await listener.AcceptTcpClientAsync();
+                clients.Add(client);
+                Log("Client connected.");
+                _ = HandleClient(client);
+            }
+            catch (Exception ex)
+            {
+                Log($"Listener error: {ex.Message}");
+            }
         }
     }
 
     static async Task HandleClient(TcpClient client)
     {
-        var stream = client.GetStream();
-        var buf = new byte[1024];
         string user = "Unknown";
 
         try
         {
+            var stream = client.GetStream();
+            byte[] buffer = new byte[1024];
+
             while (true)
             {
-                int read = await stream.ReadAsync(buf, 0, buf.Length);
+                int read = await stream.ReadAsync(buffer, 0, buffer.Length);
                 if (read == 0) break;
 
-                string msg = Encoding.UTF8.GetString(buf, 0, read);
+                string msg = Encoding.UTF8.GetString(buffer, 0, read).Trim();
 
                 if (msg.StartsWith("__username__:"))
                 {
-                    user = msg[13..];
-                    lock (lockObj) names[client] = user;
-                    Broadcast($"*** {user} joined the chat ***");
+                    string newUser = msg[13..].Trim();
+                    if (!string.IsNullOrWhiteSpace(newUser))
+                    {
+                        names[client] = newUser;
+                        user = newUser;
+                        await BroadcastAsync($"*** {user} joined the chat ***");
+                    }
                     continue;
                 }
 
-                Console.WriteLine($"{user}: {msg}");
-                Broadcast($"{user}: {msg}", client);
+                Log($"{user}: {msg}");
+                await BroadcastAsync($"{user}: {msg}", exclude: client);
             }
         }
-        catch { }
+        catch (Exception ex)
+        {
+            Log($"Client error ({user}): {ex.Message}");
+        }
         finally
         {
-            lock (lockObj)
-            {
-                clients.Remove(client);
-                names.Remove(client);
-            }
-            Broadcast($"*** {user} left the chat ***");
-            client.Close();
+            CleanupClient(client, user);
         }
     }
 
-    static void Broadcast(string message, TcpClient exclude = null)
+    static async Task BroadcastAsync(string message, TcpClient exclude = null)
     {
         byte[] data = Encoding.UTF8.GetBytes(message);
-        lock (lockObj)
+
+        foreach (var client in clients)
         {
-            foreach (var c in clients)
+            if (client == exclude) continue;
+
+            try
             {
-                if (c == exclude) continue;
-                try { c.GetStream().Write(data, 0, data.Length); } catch { }
+                await client.GetStream().WriteAsync(data);
+            }
+            catch
+            {
+                CleanupClient(client);
             }
         }
-        Console.WriteLine(exclude == null ? message : "");
+
+        Log(message);
     }
 
-    static async Task RunDiscovery()
+    static void CleanupClient(TcpClient client, string username = null)
+    {
+        if (client == null) return;
+
+        clients.TryTake(out _);
+        names.TryRemove(client, out _);
+
+        client.Close();
+
+        if (username != null)
+            _ = BroadcastAsync($"*** {username} left the chat ***");
+
+        Log($"Client disconnected: {username}");
+    }
+
+    static async Task RunDiscovery(CancellationToken token)
     {
         using var udp = new UdpClient(5001);
-        Console.WriteLine("Discovery service on port 5001");
+        Log("Running discovery service on port 5001...");
 
-        while (true)
+        while (!token.IsCancellationRequested)
         {
-            var result = await udp.ReceiveAsync();
-            if (Encoding.UTF8.GetString(result.Buffer) == "DISCOVER_CHAT_SERVER")
+            try
             {
-                string response = $"CHAT_SERVER|{GetLocalIP()}|5000";
-                byte[] data = Encoding.UTF8.GetBytes(response);
-                await udp.SendAsync(data, data.Length, result.RemoteEndPoint);
+                var result = await udp.ReceiveAsync(token);
+                string msg = Encoding.UTF8.GetString(result.Buffer);
+
+                if (msg == "DISCOVER_CHAT_SERVER")
+                {
+                    string response = $"CHAT_SERVER|{GetLocalIP()}|5000";
+                    byte[] data = Encoding.UTF8.GetBytes(response);
+                    await udp.SendAsync(data, data.Length, result.RemoteEndPoint);
+                }
+            }
+            catch (OperationCanceledException) { }
+            catch (Exception ex)
+            {
+                Log($"Discovery error: {ex.Message}");
             }
         }
     }
@@ -108,4 +152,6 @@ class ChatServer
                 return ip.ToString();
         return "127.0.0.1";
     }
+
+    static void Log(string msg) => Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] {msg}");
 }

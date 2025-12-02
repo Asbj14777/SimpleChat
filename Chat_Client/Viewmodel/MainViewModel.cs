@@ -11,6 +11,7 @@ namespace Chat_Client.Viewmodel
     {
         readonly ChatClientService _chatService = new();
         public ObservableCollection<Message> Messages { get; } = new();
+    
 
         string status = "";
         public string Status { get => status; set => Set(ref status, value); }
@@ -26,7 +27,7 @@ namespace Chat_Client.Viewmodel
         public MainViewModel()
         {
             _chatService.MessageReceived += HandleIncoming;
-            _chatService.StatusChanged += s => Status = s;
+            _chatService.StatusChanged += _status => Status = _status;
 
             SendCommand = new RelayCommand(
                 async _ => await SendAsync(),
@@ -54,11 +55,11 @@ namespace Chat_Client.Viewmodel
                 }
                 else
                 {
-                    int i = msg.IndexOf(':');
-                    if (i > 0)
+                    int index = msg.IndexOf(':');
+                    if (index > 0)
                     {
-                        sender = msg[..i].Trim();
-                        text = msg[(i + 1)..].Trim();
+                        sender = msg[..index].Trim();
+                        text = msg[(index + 1)..].Trim();
                     }
                 }
 
@@ -78,7 +79,7 @@ namespace Chat_Client.Viewmodel
             string text = InputMessage.Trim();
             if (text == "") return;
 
-            await _chatService.SendMessage(text);
+            await _chatService.SendMessageAsync(text);
 
             Messages.Add(new Message
             {
